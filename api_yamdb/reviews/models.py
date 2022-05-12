@@ -13,7 +13,7 @@ class User(AbstractUser):
         'email address',
         blank=False,
         unique=True,
-        max_length=254,
+        max_length=50,
     )
     bio = models.TextField('bio', blank=True)
     role = models.CharField(
@@ -55,44 +55,53 @@ class Titles(models.Model):
         on_delete=models.PROTECT,
         related_name='category',
     )
+    genres = models.ManyToManyField(Genres, through='GenreTitle')
 
-# class Group(models.Model):
-#     title = models.CharField(max_length=200)
-#     slug = models.SlugField(unique=True)
-#     description = models.TextField()
-#
-#     def __str__(self):
-#         return self.title
-#
-#
-# class Post(models.Model):
-#     text = models.TextField()
-#     pub_date = models.DateTimeField(
-#         'Дата публикации', auto_now_add=True
-#     )
-#     author = models.ForeignKey(
-#         User, on_delete=models.CASCADE, related_name='posts'
-#     )
-#     image = models.ImageField(
-#         upload_to='posts/', null=True, blank=True
-#     )
-#     group = models.ForeignKey(
-#         Group, on_delete=models.CASCADE,
-#         related_name='posts', blank=True, null=True
-#     )
-#
-#     def __str__(self):
-#         return self.text
-#
-#
-# class Comment(models.Model):
-#     author = models.ForeignKey(
-#         User, on_delete=models.CASCADE, related_name='comments'
-#     )
-#     post = models.ForeignKey(
-#         Post, on_delete=models.CASCADE, related_name='comments'
-#     )
-#     text = models.TextField()
-#     created = models.DateTimeField(
-#         'Дата добавления', auto_now_add=True, db_index=True
-#     )
+    def __str__(self):
+        return self.name
+
+
+class GenreTitle(models.Model):
+    title_id = models.ForeignKey(
+        Titles,
+        on_delete=models.CASCADE
+    )
+    genre_id = models.ForeignKey(
+        Genres,
+        on_delete=models.CASCADE
+    )
+
+
+class Reviews(models.Model):
+    title_id = models.OneToOneField(
+        Titles,
+        verbose_name='titles',
+        on_delete=models.PROTECT,
+    )
+    text = models.TextField()
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='reviews',
+    )
+    score = models.IntegerField()
+    pub_date = models.DateTimeField(
+        'Дата публикации',
+        auto_now_add=True,
+    )
+
+
+class Comments(models.Model):
+    review_id = models.OneToOneField(
+        Reviews,
+        verbose_name='reviews',
+        on_delete=models.CASCADE,
+    )
+    text = models.TextField()
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='comments',
+    )
+    pub_date = models.DateTimeField(
+        'Дата публикации',
+        auto_now_add=True,
+    )
