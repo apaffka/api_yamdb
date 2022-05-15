@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import User
-
+from .models import Categories, Genres, Titles, Reviews, Comments
 
 class UserAdmin(admin.ModelAdmin):
     """Конфигурируем пользовательскую модель в админке."""
@@ -23,3 +23,8 @@ class UserAdmin(admin.ModelAdmin):
 
 
 admin.site.register(User, UserAdmin)
+admin.site.register(Categories) 
+admin.site.register(Genres) 
+admin.site.register(Titles) 
+admin.site.register(Reviews)
+admin.site.register(Comments)
