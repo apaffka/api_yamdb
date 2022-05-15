@@ -28,6 +28,8 @@ class User(AbstractUser):
         blank=False,
         unique=True,
     )
+    USERNAME_FIELD = 'username' 
+    REQUIRED_FIELDS = ['bio', 'role', 'code','email']
 
     def __str__(self):
         return f'{self.first_name} {self.last_name}'
