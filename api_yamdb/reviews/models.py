@@ -99,7 +99,7 @@ class GenreTitle(models.Model):
 
 
 class Reviews(models.Model):
-    title = models.OneToOneField(
+    title = models.ForeignKey(
         Titles,
         verbose_name='titles',
         on_delete=models.PROTECT,
@@ -120,9 +120,10 @@ class Reviews(models.Model):
 
 
 class Comments(models.Model):
-    review = models.OneToOneField(
+    review = models.ForeignKey(
         Reviews,
         verbose_name='reviews',
+        related_name='comments',
         on_delete=models.CASCADE,
     )
     text = models.TextField()

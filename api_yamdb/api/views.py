@@ -3,6 +3,7 @@ from reviews.models import User, Comments, Titles, Reviews
 from .serializers import UserSerializer, ReviewSerializer, CommentsSerializer, TitleSerializer
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import permissions
+from django.shortcuts import get_object_or_404
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -20,6 +21,15 @@ class ReviewViewSet(viewsets.ModelViewSet):
     # Теперь анонимным GET-запросом по-прежнему можно получить информацию  
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,) 
 
+    def get_queryset(self):
+        title_id = self.kwargs.get('title_id')
+        title = get_object_or_404(Titles, id=title_id)
+        new_queryset = Reviews.objects.filter(title=title)
+        return new_queryset
+
+
+
+        
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comments.objects.all()
     serializer_class = CommentsSerializer
