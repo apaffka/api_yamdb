@@ -31,10 +31,14 @@ class CommentsSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        read_only=True, slug_field='username'
+        
+    )
     class Meta:
+        fields = '__all__'
         model = Reviews
-        # comments = CommentsSerializer(many=True)  
-        fields = ('id','text', 'author', 'score', 'pub_date','title','comments') 
+
        
 class TitleSerializer(serializers.ModelSerializer):
     class Meta:
