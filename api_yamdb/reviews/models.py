@@ -116,8 +116,15 @@ class Reviews(models.Model):
         auto_now_add=True,
     )
 
+    # На одно произведение пользователь может оставить только один отзыв.
+    class Meta:
+        unique_together = ('title', 'author')
+
     def __str__(self):
         return self.text
+
+
+
 
 
 class Comments(models.Model):
