@@ -1,10 +1,9 @@
-from rest_framework import serializers, status
-from rest_framework.response import Response
-from reviews.models import User
+from rest_framework import serializers
+
+from reviews.models import User, Categories, Genres, Titles
 
 
 class UserSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
         fields = (
@@ -21,14 +20,13 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {
                     'username':
-                    'Нельзя использовать имя me в качестве имени пользователя.'
+                        'Нельзя использовать имя me в качестве имени пользователя.'
                 }
             )
         return data
 
 
 class OneUserSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
         fields = (
@@ -54,21 +52,21 @@ class SignupSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {
                     'username':
-                    'Нельзя использовать имя me в качестве имени пользователя.'
+                        'Нельзя использовать имя me в качестве имени пользователя.'
                 },
             )
         elif User.objects.filter(username=data['username']).exists():
             raise serializers.ValidationError(
                 {
                     'username':
-                    'Пользователь с данным username уже зарегистрирован.'
+                        'Пользователь с данным username уже зарегистрирован.'
                 },
             )
         elif User.objects.filter(email=data['email']).exists():
             raise serializers.ValidationError(
                 {
                     'email':
-                    'Пользователь с данным email уже зарегистрирвоан.'
+                        'Пользователь с данным email уже зарегистрирвоан.'
                 },
             )
         return data
@@ -112,3 +110,22 @@ class MeAdminSerializer(serializers.ModelSerializer):
             'bio',
             'role'
         )
+
+
+class CategoriesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Categories
+        fields = ('name', 'slug')
+        lookup_field = 'slug'
+
+
+class GenresSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Genres
+        fields = ('name', 'slug')
+
+
+class TitlesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Titles
+        fields = '__all__'
