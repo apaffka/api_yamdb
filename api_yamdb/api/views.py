@@ -40,11 +40,27 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
         
 class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comments.objects.all()
     serializer_class = CommentsSerializer
     pagination_class = PageNumberPagination 
     # Теперь анонимным GET-запросом по-прежнему можно получить информацию 
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,) 
+
+    
+    def get_queryset(self):
+       title_id = self.kwargs.get('title_id')
+       title = get_object_or_404(Titles, id=title_id)
+       review = get_object_or_404(title.reviews, id = self.kwargs.get('review_id'))
+       return  review.comments.all()
+
+    def create(self, request, *args, **kwargs):
+            serializer = CommentsSerializer(data=request.data)
+            title_id = self.kwargs.get('title_id')
+            title = get_object_or_404(Titles, id=title_id)
+            review = get_object_or_404(title.reviews, id = self.kwargs.get('review_id'))
+            if serializer.is_valid():
+                serializer.save(author=self.request.user, review=review)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Titles.objects.all()

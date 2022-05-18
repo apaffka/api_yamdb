@@ -25,9 +25,13 @@ class SignupSerializer(serializers.ModelSerializer):
         model = User
 
 class CommentsSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username'
+    )
     class Meta:
         model = Comments
-        fields = '__all__' 
+        fields = ('id','author','pub_date','text') 
 
 
 class ReviewSerializer(serializers.ModelSerializer):

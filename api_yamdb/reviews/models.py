@@ -101,8 +101,9 @@ class GenreTitle(models.Model):
 class Reviews(models.Model):
     title = models.ForeignKey(
         Titles,
-        verbose_name='titles',
+        verbose_name='reviews',
         on_delete=models.PROTECT,
+        related_name='reviews',
     )
     text = models.TextField()
     author = models.ForeignKey(
@@ -122,7 +123,7 @@ class Reviews(models.Model):
 class Comments(models.Model):
     review = models.ForeignKey(
         Reviews,
-        verbose_name='reviews',
+        verbose_name='comments',
         related_name='comments',
         on_delete=models.CASCADE,
     )
