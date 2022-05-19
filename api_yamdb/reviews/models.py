@@ -32,68 +32,68 @@ class User(AbstractUser):
         return f'{self.first_name} {self.last_name}'
 
 
-# class Categories(models.Model):
-#     name = models.TextField(
-#         blank=False,
-#         unique=True,
-#     )
-#     slug = models.SlugField(
-#         max_length=50,
-#         unique=True,
-#     )
-#
-#     def __str__(self):
-#         return self.name
-#
-#
-# class Genres(models.Model):
-#     name = models.CharField(
-#         blank=False,
-#         unique=True,
-#         max_length=25,
-#     )
-#     slug = models.SlugField(
-#         max_length=25,
-#         unique=True,
-#     )
-#
-#     def __str__(self):
-#         return self.name
-#
-#
-# class Titles(models.Model):
-#     name = models.CharField(
-#         blank=False,
-#         max_length=150,
-#     )
-#     year = models.IntegerField()
-#     description = models.TextField(
-#         'description',
-#     )
-#     category = models.ForeignKey(
-#         Categories,
-#         on_delete=models.PROTECT,
-#         related_name='category',
-#     )
-#     genres = models.ManyToManyField(
-#         Genres,
-#         through='GenreTitle'
-#     )
-#
-#     def __str__(self):
-#         return self.name
-#
-#
-# class GenreTitle(models.Model):
-#     title = models.ForeignKey(
-#         Titles,
-#         on_delete=models.CASCADE
-#     )
-#     genre = models.ForeignKey(
-#         Genres,
-#         on_delete=models.CASCADE
-#     )
-#
+class Categories(models.Model):
+    name = models.TextField(
+        blank=False,
+        unique=True,
+    )
+    slug = models.SlugField(
+        max_length=50,
+        unique=True,
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class Genres(models.Model):
+    name = models.CharField(
+        blank=False,
+        unique=True,
+        max_length=25,
+    )
+    slug = models.SlugField(
+        max_length=25,
+        unique=True,
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class Titles(models.Model):
+    name = models.CharField(
+        blank=False,
+        max_length=150,
+    )
+    year = models.IntegerField()
+    description = models.TextField(
+        'description',
+    )
+    category = models.ForeignKey(
+        Categories,
+        on_delete=models.PROTECT,
+        related_name='category',
+    )
+    genres = models.ManyToManyField(
+        Genres,
+        through='GenreTitle'
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class GenreTitle(models.Model):
+    title = models.ForeignKey(
+        Titles,
+        on_delete=models.CASCADE
+    )
+    genre = models.ForeignKey(
+        Genres,
+        on_delete=models.CASCADE
+    )
+
 #
 # class Reviews(models.Model):
 #     title = models.ForeignKey(

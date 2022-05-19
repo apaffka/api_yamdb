@@ -1,18 +1,21 @@
-from rest_framework import status
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from .token import default_token_generator
-from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
-from .token import get_tokens_for_user
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status
+from rest_framework import viewsets, permissions, filters
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from reviews.models import User, Categories, Genres, Titles
 from .permissions import IsAdministrator, IsModerator, IsSuperuser, IsUser
-
-from reviews.models import User
-
-from .serializers import (UserSerializer, SignupSerializer,
+from .serializers import (SignupSerializer,
                           TokenSerializer, MeSerializer, OneUserSerializer,
-                          MeAdminSerializer)
+                          MeAdminSerializer, UserSerializer,
+                          CategoriesSerializer, GenresSerializer,
+                          TitlesSerializer, )
+from .token import default_token_generator
+from .token import get_tokens_for_user
 
 
 class APIUser(APIView, LimitOffsetPagination):
@@ -151,3 +154,26 @@ class APIMe(APIView):
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
+
+
+class CategoriesViewSet(viewsets.ModelViewSet):
+    queryset = Categories.objects.all()
+    serializer_class = CategoriesSerializer
+    lookup_field = 'slug'
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    search_fields = ('name',)
+
+
+class GenresViewSet(viewsets.ModelViewSet):
+    # Необходимо добавить права доступа:
+    # Создавать категории может только Администратор.
+    queryset = Genres.objects.all()
+    serializer_class = GenresSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+
+class TitlesViewSet(viewsets.ModelViewSet):
+    queryset = Titles.objects.all()
+    serializer_class = TitlesSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
