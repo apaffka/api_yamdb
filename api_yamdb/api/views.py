@@ -160,18 +160,35 @@ class CategoriesViewSet(viewsets.ModelViewSet):
     queryset = Categories.objects.all()
     serializer_class = CategoriesSerializer
     lookup_field = 'slug'
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    # permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
 
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            self.permission_classes = [permissions.IsAuthenticatedOrReadOnly, ]
+        else:
+
+            self.permission_classes = [IsAdministrator, ]
+
+        # return [permission() for permission in self.permission_classes]
+        return super(CategoriesViewSet, self).get_permissions()
+
 
 class GenresViewSet(viewsets.ModelViewSet):
-    # Необходимо добавить права доступа:
-    # Создавать категории может только Администратор.
     queryset = Genres.objects.all()
     serializer_class = GenresSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    # permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            self.permission_classes = [permissions.IsAuthenticatedOrReadOnly, ]
+        else:
+
+            self.permission_classes = [IsAdministrator, ]
+
+        # return [permission() for permission in self.permission_classes]
+        return super(GenresViewSet, self).get_permissions()
 
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Titles.objects.all()
