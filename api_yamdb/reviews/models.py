@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Avg
 
 # создаём последовательность для выбора роли пользователя
 USER_ROLE_CHOICES = [
