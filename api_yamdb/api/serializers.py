@@ -1,6 +1,6 @@
 from rest_framework import serializers
-
-from reviews.models import User, Categories, Genres, Titles
+from rest_framework.validators import UniqueValidator
+from reviews.models import User, Categories, Genres, Titles, Reviews, Comments
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -116,7 +116,6 @@ class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Categories
         fields = ('name', 'slug')
-        lookup_field = 'slug'
 
 
 class GenresSerializer(serializers.ModelSerializer):
@@ -129,3 +128,38 @@ class TitlesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Titles
         fields = '__all__'
+
+class CommentsSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username'
+    )
+    validators=[UniqueValidator(queryset=Comments.objects.all())]
+
+    class Meta:
+        model = Comments
+        fields = ('id','author','pub_date','text') 
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        read_only=True, slug_field='username'
+        
+    )
+    title = serializers.SlugRelatedField(
+        read_only=True, slug_field='id')
+
+    class Meta:
+        fields = ('title', 'id', 'text', 'author', 'score', 'pub_date')
+        model = Reviews
+
+    def validate(self, data):
+        if self.context['request'].method == 'PATCH':
+            return data
+        title = self.context['view'].kwargs['title_id']
+        author = self.context['request'].user
+        if Reviews.objects.filter(author=author, title__id=title).exists():
+            raise serializers.ValidationError(
+                'Повторно комментировать нельзя')
+        return data
+

@@ -94,51 +94,51 @@ class GenreTitle(models.Model):
         on_delete=models.CASCADE
     )
 
-#
-# class Reviews(models.Model):
-#     title = models.ForeignKey(
-#         Titles,
-#         verbose_name='titles',
-#         on_delete=models.PROTECT,
-#     )
-#     text = models.TextField()
-#     author = models.ForeignKey(
-#         User, on_delete=models.CASCADE,
-#         related_name='reviews',
-#     )
-#     score = models.IntegerField()
-#     pub_date = models.DateTimeField(
-#         'pub_date',
-#         auto_now_add=True,
-#     )
-#
-#     class Meta:
-#         constraints = [
-#             models.UniqueConstraint(
-#                 fields=["title", "author"], name="unique_review"
-#             ),
-#         ]
-#
-#     def __str__(self):
-#         return self.text
-#
-#
-# class Comments(models.Model):
-#     review = models.OneToOneField(
-#         Reviews,
-#         verbose_name='reviews',
-#         related_name='comments',
-#         on_delete=models.CASCADE,
-#     )
-#     text = models.TextField()
-#     author = models.ForeignKey(
-#         User, on_delete=models.CASCADE,
-#         related_name='comments',
-#     )
-#     pub_date = models.DateTimeField(
-#         'pub_date',
-#         auto_now_add=True,
-#     )
-#
-#     def __str__(self):
-#         return self.text
+
+class Reviews(models.Model):
+     title = models.ForeignKey(
+        Titles,
+         verbose_name='titles',
+         on_delete=models.PROTECT,
+     )
+     text = models.TextField()
+     author = models.ForeignKey(
+         User, on_delete=models.CASCADE,
+         related_name='reviews',
+     )
+     score = models.IntegerField()
+     pub_date = models.DateTimeField(
+         'pub_date',
+         auto_now_add=True,
+     )
+
+     class Meta:
+         constraints = [
+             models.UniqueConstraint(
+                 fields=["title", "author"], name="unique_review"
+             ),
+         ]
+
+     def __str__(self):
+         return self.text
+
+
+class Comments(models.Model):
+     review = models.OneToOneField(
+         Reviews,
+         verbose_name='reviews',
+         related_name='comments',
+         on_delete=models.CASCADE,
+     )
+     text = models.TextField()
+     author = models.ForeignKey(
+         User, on_delete=models.CASCADE,
+         related_name='comments',
+     )
+     pub_date = models.DateTimeField(
+         'pub_date',
+         auto_now_add=True,
+     )
+
+     def __str__(self):
+         return self.text

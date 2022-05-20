@@ -6,14 +6,18 @@ from rest_framework import viewsets, permissions, filters
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
 
-from reviews.models import User, Categories, Genres, Titles
-from .permissions import IsAdministrator, IsModerator, IsSuperuser, IsUser
+from reviews.models import User, Categories, Genres, Titles, Reviews, Comments
+from .permissions import (IsAdministrator, IsModerator, IsSuperuser, IsUser, 
+                          CommentRewiewPermission,)
 from .serializers import (SignupSerializer,
                           TokenSerializer, MeSerializer, OneUserSerializer,
                           MeAdminSerializer, UserSerializer,
                           CategoriesSerializer, GenresSerializer,
-                          TitlesSerializer, )
+                          TitlesSerializer, ReviewSerializer, 
+                          CommentsSerializer 
+                          )
 from .token import default_token_generator
 from .token import get_tokens_for_user
 
@@ -177,3 +181,49 @@ class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Titles.objects.all()
     serializer_class = TitlesSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer 
+    pagination_class = PageNumberPagination
+    # Теперь анонимным GET-запросом по-прежнему можно получить информацию  
+    permission_classes = [CommentRewiewPermission]
+    
+
+    def get_queryset(self):
+        title_id = self.kwargs.get('title_id')
+        title = get_object_or_404(Titles, id=title_id)
+        new_queryset = Reviews.objects.filter(title=title)
+        return new_queryset
+
+    def create(self, request, *args, **kwargs):
+            serializer = ReviewSerializer(data=request.data)
+            title = get_object_or_404(Titles, pk=self.kwargs.get('title_id'))
+            if serializer.is_valid():
+                serializer.save(author=request.user, title=title)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentsSerializer
+    pagination_class = PageNumberPagination 
+    # Теперь анонимным GET-запросом по-прежнему можно получить информацию 
+    permission_classes = [CommentRewiewPermission]
+
+    
+    def get_queryset(self):
+       title_id = self.kwargs.get('title_id')
+       title = get_object_or_404(Titles, id=title_id)
+       review = get_object_or_404(title.reviews, id = self.kwargs.get('review_id'))
+       return  review.comments.all()
+
+    def create(self, request, *args, **kwargs):
+            serializer = CommentsSerializer(data=request.data)
+            title_id = self.kwargs.get('title_id')
+            title = get_object_or_404(Titles, id=title_id)
+            review = get_object_or_404(title.reviews, id = self.kwargs.get('review_id'))
+            if serializer.is_valid():
+                serializer.save(author=self.request.user, review=review)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
