@@ -2,6 +2,13 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 
 
+class IsAnonimous(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_anonymous is False:
+            return False
+        return True
+
+
 class IsModerator(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.user.is_anonymous is True:

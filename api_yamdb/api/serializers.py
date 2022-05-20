@@ -55,14 +55,14 @@ class SignupSerializer(serializers.ModelSerializer):
                         'Нельзя использовать имя me в качестве имени пользователя.'
                 },
             )
-        elif User.objects.filter(username=data['username']).exists():
+        if User.objects.filter(username=data['username']).exists():
             raise serializers.ValidationError(
                 {
                     'username':
                         'Пользователь с данным username уже зарегистрирован.'
                 },
             )
-        elif User.objects.filter(email=data['email']).exists():
+        if User.objects.filter(email=data['email']).exists():
             raise serializers.ValidationError(
                 {
                     'email':
@@ -126,6 +126,16 @@ class GenresSerializer(serializers.ModelSerializer):
 
 
 class TitlesSerializer(serializers.ModelSerializer):
+    genres = GenresSerializer(many=True)
+    category = CategoriesSerializer()
+    rating = serializers.SerializerMethodField('get_rating')
+
     class Meta:
         model = Titles
-        fields = '__all__'
+        fields = ('id', 'name', 'year', 'rating', 'description',
+                  'genres', 'category'
+                  )
+
+    def get_rating(self, title):
+        pass
+

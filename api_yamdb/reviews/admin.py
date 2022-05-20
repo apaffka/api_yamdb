@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User
+from .models import User, Genres
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -22,4 +22,17 @@ class UserAdmin(admin.ModelAdmin):
     empty_value_display = ('-пусто-')
 
 
+# class GenresAdmin(admin.ModelAdmin):
+#     list_display = (
+#         'name',
+#         'slug',
+#     )
+#     list_editable = (
+#         'name',
+#         'slug',
+#     )
+#     empty_value_display = ('-пусто-')
+
+
 admin.site.register(User, UserAdmin)
+# admin.site.register(Genres, GenresAdmin)

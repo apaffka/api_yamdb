@@ -1,14 +1,15 @@
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status
+from rest_framework import status, mixins
 from rest_framework import viewsets, permissions, filters
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from reviews.models import User, Categories, Genres, Titles
-from .permissions import IsAdministrator, IsModerator, IsSuperuser, IsUser
+from .permissions import (IsAdministrator, IsModerator, IsSuperuser, IsUser,)
 from .serializers import (SignupSerializer,
                           TokenSerializer, MeSerializer, OneUserSerializer,
                           MeAdminSerializer, UserSerializer,
@@ -65,10 +66,11 @@ class APISignup(APIView):
         serializer = SignupSerializer(data=request.data)
         if serializer.is_valid():
             username = serializer.data['username']
-            email = self.request.data['email']
+            email = serializer.data['email']
             user, created = User.objects.get_or_create(
                 username=username,
-                defaults={'email': email},
+              #  defaults={'email': email},
+                email=email,
             )
             if created is True:
                 token = default_token_generator.make_token(user)
@@ -156,21 +158,46 @@ class APIMe(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
 
-class CategoriesViewSet(viewsets.ModelViewSet):
+class CategoriesViewSet(
+    mixins.CreateModelMixin, mixins.DestroyModelMixin,
+    mixins.ListModelMixin, viewsets.GenericViewSet
+):
     queryset = Categories.objects.all()
     serializer_class = CategoriesSerializer
     lookup_field = 'slug'
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
 
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return (IsAuthenticatedOrReadOnly(),)
+        elif self.request.method == 'POST':
+            return (IsAdministrator(),)
+        elif self.request.method == 'DELETE':
+            return (IsAdministrator(),)
+        return super().get_permissions()
 
-class GenresViewSet(viewsets.ModelViewSet):
-    # Необходимо добавить права доступа:
-    # Создавать категории может только Администратор.
+
+class GenresViewSet(
+    mixins.CreateModelMixin, mixins.DestroyModelMixin,
+    mixins.ListModelMixin, viewsets.GenericViewSet
+):
     queryset = Genres.objects.all()
     serializer_class = GenresSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    lookup_field = 'slug'
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    search_fields = ('name',)
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return (IsAuthenticatedOrReadOnly(),)
+        elif self.request.method == 'POST':
+            return (IsAdministrator(),)
+        elif self.request.method == 'DELETE':
+            return (IsAdministrator(),)
+        return super().get_permissions()
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
