@@ -7,7 +7,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
-
+from django.db.models import Avg
 from reviews.models import User, Categories, Genres, Titles, Reviews, Comments
 from .permissions import (IsAdministrator, IsModerator, IsSuperuser, IsUser, 
                           CommentRewiewPermission,)
@@ -178,9 +178,26 @@ class GenresViewSet(viewsets.ModelViewSet):
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
-    queryset = Titles.objects.all()
+    queryset = Titles.objects.all().annotate(
+    rating=Avg('reviews__score')).order_by('id')
     serializer_class = TitlesSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    pagination_class = PageNumberPagination
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('year',)
+
+    def get_queryset(self):
+        queryset = self.queryset
+        genre_slug = self.request.query_params.get('genre')
+        category_slug = self.request.query_params.get('category')
+        name = self.request.query_params.get('name')
+        if genre_slug:
+            queryset = queryset.filter(genre__slug=genre_slug)
+        if category_slug:
+            queryset = queryset.filter(category__slug=category_slug)
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+        return queryset
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -196,13 +213,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
         new_queryset = Reviews.objects.filter(title=title)
         return new_queryset
 
-    def create(self, request, *args, **kwargs):
-            serializer = ReviewSerializer(data=request.data)
-            title = get_object_or_404(Titles, pk=self.kwargs.get('title_id'))
-            if serializer.is_valid():
-                serializer.save(author=request.user, title=title)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        title = get_object_or_404(Titles, pk=self.kwargs.get('title_id'))
+        serializer.save(author=self.request.user, title=title)
 
         
 class CommentViewSet(viewsets.ModelViewSet):
@@ -218,12 +231,8 @@ class CommentViewSet(viewsets.ModelViewSet):
        review = get_object_or_404(title.reviews, id = self.kwargs.get('review_id'))
        return  review.comments.all()
 
-    def create(self, request, *args, **kwargs):
-            serializer = CommentsSerializer(data=request.data)
-            title_id = self.kwargs.get('title_id')
-            title = get_object_or_404(Titles, id=title_id)
-            review = get_object_or_404(title.reviews, id = self.kwargs.get('review_id'))
-            if serializer.is_valid():
-                serializer.save(author=self.request.user, review=review)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        title = get_object_or_404(Titles, id=self.kwargs.get('title_id'))
+        review = get_object_or_404(
+            title.reviews, id=self.kwargs.get('review_id'))
+        serializer.save(author=self.request.user, review=review)

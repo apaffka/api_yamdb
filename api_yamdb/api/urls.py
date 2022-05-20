@@ -12,8 +12,8 @@ router_v1 = DefaultRouter()
 router_v1.register(r'categories', CategoriesViewSet, basename='categories')
 router_v1.register(r'genres', GenresViewSet, basename='genres')
 router_v1.register(r'titles', TitlesViewSet, basename='titles')
-router_v1.register('review', ReviewViewSet)
-router_v1.register('comment', CommentViewSet)
+router_v1.register('reviews', ReviewViewSet, basename='reviews')
+router_v1.register('comments', CommentViewSet, basename='comments')
 
 urlpatterns = [
     path('v1/', include(router_v1.urls)),

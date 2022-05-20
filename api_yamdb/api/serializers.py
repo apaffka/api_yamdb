@@ -125,20 +125,39 @@ class GenresSerializer(serializers.ModelSerializer):
 
 
 class TitlesSerializer(serializers.ModelSerializer):
+    genres = serializers.SlugRelatedField(
+        queryset=Genres.objects.all(),
+        slug_field='slug', many=True)
+    category = serializers.SlugRelatedField(
+        queryset=Categories.objects.all(),
+        slug_field='slug')
+    rating = serializers.IntegerField(required=False)
+
     class Meta:
         model = Titles
-        fields = '__all__'
+        fields = (
+            'id', 'name', 'year', 'category', 'genres', 'rating', 'description')
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        genres = Genres.objects.filter(slug__in=data['genres'])
+        category = Categories.objects.get(slug=data['category'])
+        data['genres'] = GenresSerializer(instance=genres, many=True).data
+        data['category'] = CategoriesSerializer(instance=category).data
+        return data
 
 class CommentsSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True,
-        slug_field='username'
+        slug_field='username',
+        validators=[UniqueValidator(queryset=Comments.objects.all())]
     )
-    validators=[UniqueValidator(queryset=Comments.objects.all())]
+    id = serializers.PrimaryKeyRelatedField(many=False, read_only=True)
+    
 
     class Meta:
         model = Comments
-        fields = ('id','author','pub_date','text') 
+        fields = ('id','author','pub_date','text','review') 
 
 
 class ReviewSerializer(serializers.ModelSerializer):

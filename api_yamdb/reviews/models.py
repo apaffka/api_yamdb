@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
+
 
 # создаём последовательность для выбора роли пользователя
 USER_ROLE_CHOICES = [
@@ -33,6 +35,7 @@ class User(AbstractUser):
 
 
 class Categories(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.TextField(
         blank=False,
         unique=True,
@@ -42,11 +45,16 @@ class Categories(models.Model):
         unique=True,
     )
 
-    def __str__(self):
-        return self.name
+    class Meta:
+        ordering = ('id',)
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
 
+    def __str__(self):
+        return self.slug
 
 class Genres(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.CharField(
         blank=False,
         unique=True,
@@ -57,11 +65,17 @@ class Genres(models.Model):
         unique=True,
     )
 
+    class Meta:
+        ordering = ('id',)
+        verbose_name = 'Жанр'
+        verbose_name_plural = 'Жанры'
+
     def __str__(self):
-        return self.name
+        return self.slug
 
 
 class Titles(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.CharField(
         blank=False,
         max_length=150,
@@ -80,6 +94,10 @@ class Titles(models.Model):
         through='GenreTitle'
     )
 
+    class Meta:
+        verbose_name = 'Произведение'
+        verbose_name_plural = 'Произведения'
+
     def __str__(self):
         return self.name
 
@@ -96,49 +114,68 @@ class GenreTitle(models.Model):
 
 
 class Reviews(models.Model):
+     id = models.AutoField(primary_key=True)
      title = models.ForeignKey(
         Titles,
-         verbose_name='titles',
-         on_delete=models.PROTECT,
-     )
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name='Произведение'
+    )
      text = models.TextField()
      author = models.ForeignKey(
-         User, on_delete=models.CASCADE,
-         related_name='reviews',
-     )
-     score = models.IntegerField()
+        User,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name='Автор'
+    )
+     score = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        verbose_name='Оценка'
+    )
      pub_date = models.DateTimeField(
-         'pub_date',
-         auto_now_add=True,
-     )
+        auto_now_add=True,
+        verbose_name='Дата публикации'
+    )
 
      class Meta:
-         constraints = [
-             models.UniqueConstraint(
-                 fields=["title", "author"], name="unique_review"
-             ),
-         ]
+        ordering = ('pub_date',)
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+        constraints = [
+            models.UniqueConstraint(
+                fields=["title", "author"], name='unique_review_for_title'
+            ),
+        ]
 
      def __str__(self):
          return self.text
 
 
 class Comments(models.Model):
-     review = models.OneToOneField(
-         Reviews,
-         verbose_name='reviews',
-         related_name='comments',
-         on_delete=models.CASCADE,
-     )
+     id = models.AutoField(primary_key=True)
+     review = models.ForeignKey(
+        Reviews,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='Дата публикации'
+    )
      text = models.TextField()
      author = models.ForeignKey(
-         User, on_delete=models.CASCADE,
-         related_name='comments',
-     )
+        User,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='Автор'
+    )
      pub_date = models.DateTimeField(
-         'pub_date',
-         auto_now_add=True,
-     )
+        auto_now_add=True,
+        verbose_name='Дата публикации'
+    )
+
+
+     class Meta:
+        ordering = ('pub_date',)
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
 
      def __str__(self):
-         return self.text
+        return self.text[:15]
