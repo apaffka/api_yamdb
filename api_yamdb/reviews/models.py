@@ -46,7 +46,7 @@ class Categories(models.Model):
         return self.name
 
 
-class Genres(models.Model):
+class Genre(models.Model):
     name = models.CharField(
         blank=False,
         unique=True,
@@ -75,8 +75,8 @@ class Titles(models.Model):
         on_delete=models.PROTECT,
         related_name='category',
     )
-    genres = models.ManyToManyField(
-        Genres,
+    genre = models.ManyToManyField(
+        Genre,
         through='GenreTitle'
     )
 
@@ -90,7 +90,7 @@ class GenreTitle(models.Model):
         on_delete=models.CASCADE
     )
     genre = models.ForeignKey(
-        Genres,
+        Genre,
         on_delete=models.CASCADE
     )
 

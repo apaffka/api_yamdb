@@ -19,7 +19,7 @@ class UserAdmin(admin.ModelAdmin):
         'bio',
         'role',
     )
-    empty_value_display = ('-пусто-')
+    empty_value_display = '-пусто-'
 
 
 admin.site.register(User, UserAdmin)
