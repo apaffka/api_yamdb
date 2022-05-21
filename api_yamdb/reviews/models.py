@@ -75,7 +75,7 @@ class Titles(models.Model):
         on_delete=models.PROTECT,
         related_name='category',
     )
-    genres = models.ManyToManyField(
+    genre = models.ManyToManyField(
         Genres,
         through='GenreTitle'
     )

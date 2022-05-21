@@ -127,6 +127,9 @@ class GenresSerializer(serializers.ModelSerializer):
 
 
 class TitlesSerializer(serializers.ModelSerializer):
+    category = serializers.StringRelatedField(read_only=True)
+    genre = serializers.StringRelatedField(many=True, read_only=True)
+
     class Meta:
         model = Titles
         fields = '__all__'

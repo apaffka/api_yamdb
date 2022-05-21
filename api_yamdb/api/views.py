@@ -193,7 +193,10 @@ class GenresViewSet(viewsets.ModelViewSet):
         # return [permission() for permission in self.permission_classes]
         return super(GenresViewSet, self).get_permissions()
 
+
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Titles.objects.all()
     serializer_class = TitlesSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filterset_fields = ('category', 'genre', 'name', 'year')
