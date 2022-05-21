@@ -2,7 +2,7 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, permissions, filters, mixins
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -156,7 +156,10 @@ class APIMe(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
 
-class CategoriesViewSet(viewsets.ModelViewSet):
+class CategoriesViewSet(mixins.CreateModelMixin,
+                        mixins.DestroyModelMixin,
+                        mixins.ListModelMixin,
+                        viewsets.GenericViewSet):
     queryset = Categories.objects.all()
     serializer_class = CategoriesSerializer
     lookup_field = 'slug'
@@ -175,7 +178,10 @@ class CategoriesViewSet(viewsets.ModelViewSet):
         return super(CategoriesViewSet, self).get_permissions()
 
 
-class GenresViewSet(viewsets.ModelViewSet):
+class GenresViewSet(mixins.CreateModelMixin,
+                    mixins.DestroyModelMixin,
+                    mixins.ListModelMixin,
+                    viewsets.GenericViewSet):
     queryset = Genres.objects.all()
     serializer_class = GenresSerializer
     lookup_field = 'slug'
@@ -200,3 +206,13 @@ class TitlesViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_fields = ('category', 'genre', 'name', 'year')
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            self.permission_classes = [permissions.IsAuthenticatedOrReadOnly, ]
+        else:
+
+            self.permission_classes = [IsAdministrator, ]
+
+        # return [permission() for permission in self.permission_classes]
+        return super(TitlesViewSet, self).get_permissions()
