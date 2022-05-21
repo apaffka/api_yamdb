@@ -112,11 +112,12 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static/'),)
 # переопределяем пользовательскую модель
 AUTH_USER_MODEL = 'reviews.User'
 
+EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
 EMAIL_HOST = 'smtp.yandex.ru'
 EMAIL_HOST_USER = 'pavel.a.agapov@yandex.ru'
-EMAIL_HOST_PASSWORD = 'Rtk12Fgk5q12'
+EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_PORT = 465
 
 REST_FRAMEWORK = {
