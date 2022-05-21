@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from reviews.models import User, Categories, Genres, Titles
+from reviews.models import User, Categories, Genre, Titles
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -20,7 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {
                     'username':
-                        'Нельзя использовать имя me в качестве имени пользователя.'
+                    'Нельзя использовать имя me в качестве имени пользователя.'
                 }
             )
         return data
@@ -52,7 +52,7 @@ class SignupSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {
                     'username':
-                        'Нельзя использовать имя me в качестве имени пользователя.'
+                    'Нельзя использовать имя me в качестве имени пользователя.'
                 },
             )
         if User.objects.filter(username=data['username']).exists():
@@ -119,23 +119,33 @@ class CategoriesSerializer(serializers.ModelSerializer):
         lookup_field = 'slug'
 
 
-class GenresSerializer(serializers.ModelSerializer):
+class GenreSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Genres
+        model = Genre
         fields = ('name', 'slug')
 
 
 class TitlesSerializer(serializers.ModelSerializer):
-    genres = GenresSerializer(many=True)
-    category = CategoriesSerializer()
-    rating = serializers.SerializerMethodField('get_rating')
+    genre = serializers.SlugRelatedField(
+        queryset=Genre.objects.all(),
+        slug_field='slug',
+        many=True
+    )
+    category = serializers.SlugRelatedField(
+        queryset=Categories.objects.all(),
+        slug_field='slug'
+    )
+    rating = serializers.IntegerField(required=False)
 
     class Meta:
         model = Titles
-        fields = ('id', 'name', 'year', 'rating', 'description',
-                  'genres', 'category'
-                  )
+        fields = (
+            'id', 'name', 'year', 'category', 'genre', 'rating', 'description')
 
-    def get_rating(self, title):
-        pass
-
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        genre = Genre.objects.filter(slug__in=data['genre'])
+        category = Categories.objects.get(slug=data['category'])
+        data['genre'] = GenreSerializer(instance=genre, many=True).data
+        data['category'] = CategoriesSerializer(instance=category).data
+        return data

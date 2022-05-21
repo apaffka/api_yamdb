@@ -9,7 +9,7 @@ from .views import (
 router_v1 = DefaultRouter()
 
 router_v1.register(r'categories', CategoriesViewSet, basename='categories')
-router_v1.register(r'genres', GenresViewSet, basename='genres')
+router_v1.register(r'genres', GenresViewSet, basename='genre')
 router_v1.register(r'titles', TitlesViewSet, basename='titles')
 
 urlpatterns = [

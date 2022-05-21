@@ -1,22 +1,21 @@
-from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, mixins
-from rest_framework import viewsets, permissions, filters
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework.pagination import (LimitOffsetPagination,
+                                       PageNumberPagination)
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from reviews.models import User, Categories, Genres, Titles
+from reviews.models import User, Categories, Genre, Titles
 from .permissions import (IsAdministrator, IsModerator, IsSuperuser, IsUser,)
 from .serializers import (SignupSerializer,
                           TokenSerializer, MeSerializer, OneUserSerializer,
                           MeAdminSerializer, UserSerializer,
-                          CategoriesSerializer, GenresSerializer,
+                          CategoriesSerializer, GenreSerializer,
                           TitlesSerializer, )
-from .token import default_token_generator
-from .token import get_tokens_for_user
+from .token import default_token_generator, get_tokens_for_user
+from .mailing import send_email
 
 
 class APIUser(APIView, LimitOffsetPagination):
@@ -69,34 +68,19 @@ class APISignup(APIView):
             email = serializer.data['email']
             user, created = User.objects.get_or_create(
                 username=username,
-              #  defaults={'email': email},
                 email=email,
             )
             if created is True:
                 token = default_token_generator.make_token(user)
                 User.objects.filter(username=username).update(
-                    code=token, is_active=False
+                    code=token, is_active=True
                 )
-                send_mail(
-                    'Регистрация на сайте YAMDb',
-                    f'Ваш адрес был указан для регистрации на сайте YAMDb.\n'
-                    f'Для продолжения регистрации используйте код: {token}',
-                    'pavel.a.agapov@yandex.ru',
-                    [f'{email}'],
-                    fail_silently=False,
-                )
+                send_email(token, email)
                 return Response({'email': email, 'username': username})
             else:
                 token = default_token_generator.make_token(user)
                 User.objects.filter(username=username).update(code=token)
-                send_mail(
-                    'Регистрация на сайте YAMDb',
-                    f'Ваш адрес был указан для регистрации на сайте YAMDb.\n'
-                    f'Для продолжения регистрации используйте код: {token}',
-                    'pavel.a.agapov@yandex.ru',
-                    [f'{email}'],
-                    fail_silently=False,
-                )
+                send_email(token, email)
                 return Response({'email': email, 'username': username})
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -170,37 +154,50 @@ class CategoriesViewSet(
     search_fields = ('name',)
 
     def get_permissions(self):
-        if self.request.method == 'GET':
-            return (IsAuthenticatedOrReadOnly(),)
-        elif self.request.method == 'POST':
-            return (IsAdministrator(),)
-        elif self.request.method == 'DELETE':
-            return (IsAdministrator(),)
-        return super().get_permissions()
+        if self.request.method in SAFE_METHODS:
+            return super().get_permissions()
+        return (IsAdministrator(),)
 
 
 class GenresViewSet(
     mixins.CreateModelMixin, mixins.DestroyModelMixin,
     mixins.ListModelMixin, viewsets.GenericViewSet
 ):
-    queryset = Genres.objects.all()
-    serializer_class = GenresSerializer
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
     lookup_field = 'slug'
     permission_classes = (IsAuthenticatedOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
 
     def get_permissions(self):
-        if self.request.method == 'GET':
-            return (IsAuthenticatedOrReadOnly(),)
-        elif self.request.method == 'POST':
-            return (IsAdministrator(),)
-        elif self.request.method == 'DELETE':
-            return (IsAdministrator(),)
-        return super().get_permissions()
+        if self.request.method in SAFE_METHODS:
+            return super().get_permissions()
+        return (IsAdministrator(),)
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
-    queryset = Titles.objects.all()
+    queryset = Titles.objects.all().order_by('id')
     serializer_class = TitlesSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    pagination_class = PageNumberPagination
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('year',)
+
+    def get_permissions(self):
+        if self.request.method in SAFE_METHODS:
+            return super().get_permissions()
+        return (IsAdministrator(),)
+
+    def get_queryset(self):
+        queryset = self.queryset
+        genre_slug = self.request.query_params.get('genre')
+        category_slug = self.request.query_params.get('category')
+        name = self.request.query_params.get('name')
+        if genre_slug:
+            queryset = queryset.filter(genre__slug=genre_slug)
+        if category_slug:
+            queryset = queryset.filter(category__slug=category_slug)
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+        return queryset
