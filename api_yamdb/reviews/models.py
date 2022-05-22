@@ -5,10 +5,10 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 
 # создаём последовательность для выбора роли пользователя
 USER_ROLE_CHOICES = [
-        ('user', 'user'),
-        ('moderator', 'moderator'),
-        ('admin', 'admin'),
-    ]
+    ('user', 'user'),
+    ('moderator', 'moderator'),
+    ('admin', 'admin'),
+]
 
 
 class User(AbstractUser):
@@ -112,8 +112,7 @@ class Review(models.Model):
     )
     score = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],
-        verbose_name='Оценка'
-             )
+        verbose_name='Оценка')
     pub_date = models.DateTimeField(
         'pub_date',
         auto_now_add=True,
