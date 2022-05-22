@@ -9,15 +9,15 @@ class IsAnonimous(permissions.BasePermission):
 class IsModerator(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
-            request.user.is_anonymous is False and
-            request.user.role == 'moderator')
+            request.user.is_anonymous is False
+            and request.user.role == 'moderator')
 
 
 class IsSuperuser(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
-            request.user.is_anonymous is False and
-            request.user.is_superuser is True)
+            request.user.is_anonymous is False
+            and request.user.is_superuser is True)
 
 
 class IsAdministrator(permissions.BasePermission):
@@ -30,8 +30,8 @@ class IsAdministrator(permissions.BasePermission):
 class IsUser(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
-            request.user.is_anonymous is False and
-            request.user.role == 'user')
+            request.user.is_anonymous is False
+            and request.user.role == 'user')
 
 
 # CommentRewiewPermission
