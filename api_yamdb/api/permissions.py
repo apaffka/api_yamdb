@@ -23,8 +23,8 @@ class IsSuperuser(permissions.BasePermission):
 class IsAdministrator(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
-            request.user.is_anonymous is False and
-            request.user.role == 'admin')
+            request.user.is_anonymous is False
+            and request.user.role == 'admin')
 
 
 class IsUser(permissions.BasePermission):
