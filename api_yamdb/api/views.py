@@ -7,13 +7,15 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from reviews.models import User, Categories, Genre, Title, Review, Comments
-from .permissions import (IsAdministrator, IsModerator, IsSuperuser, IsUser, CommentRewiewPermission)
+from reviews.models import User, Categories, Genre, Title
+from .permissions import (IsAdministrator, IsModerator, IsSuperuser, IsUser,
+                          CommentRewiewPermission)
 from .serializers import (SignupSerializer,
                           TokenSerializer, MeSerializer, OneUserSerializer,
                           MeAdminSerializer, UserSerializer,
                           CategoriesSerializer, GenreSerializer,
-                          TitlesSerializer, ReviewSerializer,CommentSerializer  )
+                          TitlesSerializer, ReviewSerializer, CommentSerializer
+                          )
 from .token import default_token_generator, get_tokens_for_user
 from .mailing import send_email
 from django.db.models import Avg

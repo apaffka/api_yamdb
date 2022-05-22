@@ -25,7 +25,9 @@ class PasswordResetTokenGenerator:
         Return a token that can be used once to do a password reset
         for the given user.
         """
-        return self._make_token_with_timestamp(user, self._num_days(self._today()))
+        return self._make_token_with_timestamp(
+            user, self._num_days(self._today())
+        )
 
     def check_token(self, user, token):
         """
@@ -45,15 +47,14 @@ class PasswordResetTokenGenerator:
             return False
 
         # Check that the timestamp/uid has not been tampered with
-        if not constant_time_compare(self._make_token_with_timestamp(user, ts), token):
+        if not constant_time_compare(
+                self._make_token_with_timestamp(user, ts), token
+        ):
             return False
 
-        # Check the timestamp is within limit. Timestamps are rounded to
-        # midnight (server time) providing a resolution of only 1 day. If a
-        # link is generated 5 minutes before midnight and used 6 minutes later,
-        # that counts as 1 day. Therefore, PASSWORD_RESET_TIMEOUT_DAYS = 1 means
-        # "at least 1 day, could be up to 2."
-        if (self._num_days(self._today()) - ts) > settings.PASSWORD_RESET_TIMEOUT_DAYS:
+        if (
+                self._num_days(self._today()) - ts
+        ) > settings.PASSWORD_RESET_TIMEOUT_DAYS:
             return False
 
         return True
@@ -86,7 +87,8 @@ class PasswordResetTokenGenerator:
         """
         # Truncate microseconds so that tokens are consistent even if the
         # database doesn't support microseconds.
-        login_timestamp = '' if user.last_login is None else user.last_login.replace(microsecond=0, tzinfo=None)
+        login_timestamp = '' if user.last_login is None else \
+            user.last_login.replace(microsecond=0, tzinfo=None)
         return str(user.pk) + str(login_timestamp) + str(timestamp)
 
     def _num_days(self, dt):
