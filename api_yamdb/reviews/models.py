@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
+
 
 # создаём последовательность для выбора роли пользователя
 USER_ROLE_CHOICES = [
@@ -95,18 +97,22 @@ class GenreTitle(models.Model):
     )
 
 
-class Reviews(models.Model):
+class Review(models.Model):
+    id = models.AutoField(primary_key=True)
     title = models.ForeignKey(
         Titles,
         verbose_name='titles',
         on_delete=models.PROTECT,
+        related_name='reviews'
     )
     text = models.TextField()
     author = models.ForeignKey(
         User, on_delete=models.CASCADE,
         related_name='reviews',
     )
-    score = models.IntegerField()
+    score =models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)],
+             verbose_name='Оценка'
+             )
     pub_date = models.DateTimeField(
         'pub_date',
         auto_now_add=True,
@@ -124,16 +130,17 @@ class Reviews(models.Model):
 
 
 class Comments(models.Model):
-    review = models.OneToOneField(
-        Reviews,
-        verbose_name='reviews',
+    id = models.AutoField(primary_key=True)
+    review = models.ForeignKey(
+        Review,
+        verbose_name='Дата публикации',
         related_name='comments',
         on_delete=models.CASCADE,
     )
     text = models.TextField()
     author = models.ForeignKey(
         User, on_delete=models.CASCADE,
-        related_name='comments',
+        related_name='Автор',
     )
     pub_date = models.DateTimeField(
         'pub_date',

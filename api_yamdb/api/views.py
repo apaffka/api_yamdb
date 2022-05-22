@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from reviews.models import User, Categories, Genre, Titles, Reviews, Comments
+from reviews.models import User, Categories, Genre, Titles, Review, Comments
 from .permissions import (IsAdministrator, IsModerator, IsSuperuser, IsUser, CommentRewiewPermission)
 from .serializers import (SignupSerializer,
                           TokenSerializer, MeSerializer, OneUserSerializer,

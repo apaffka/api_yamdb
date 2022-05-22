@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from reviews.models import User, Categories, Genre, Titles, Comments, Reviews
+from reviews.models import User, Categories, Genre, Titles, Comments, Review
 from rest_framework.validators import UniqueValidator
 
 
@@ -159,7 +159,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True, slug_field='id')
 
     class Meta:
-        model = Reviews
+        model = Review
         fields = ('title', 'id', 'text', 'author', 'score', 'pub_date')
 
     def validate(self, data):
@@ -167,7 +167,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             return data
         title = self.context['view'].kwargs['title_id']
         author = self.context['request'].user
-        if Reviews.objects.filter(author=author, title__id=title).exists():
+        if Review.objects.filter(author=author, title__id=title).exists():
             raise serializers.ValidationError(
                 'Нельзя повторно комментировать отзыв!')
         return data
