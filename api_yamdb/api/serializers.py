@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from reviews.models import User, Categories, Genre, Titles, Comments, Review
+from reviews.models import User, Categories, Genre, Title, Comments, Review
 from rest_framework.validators import UniqueValidator
 
 
@@ -138,7 +138,7 @@ class TitlesSerializer(serializers.ModelSerializer):
     rating = serializers.IntegerField(required=False)
 
     class Meta:
-        model = Titles
+        model = Title
         fields = (
             'id', 'name', 'year', 'category', 'genre', 'rating', 'description')
 
