@@ -33,6 +33,22 @@ class User(AbstractUser):
     def __str__(self):
         return f'{self.first_name} {self.last_name}'
 
+    @property
+    def is_user(self):
+        return self.role == 'user'
+
+    @property
+    def is_moderator(self):
+        return self.role == 'moderator'
+
+    @property
+    def is_admin(self):
+        return (
+            self.role == 'admin'
+            or self.is_superuser
+            or self.is_staff
+        )
+
 
 class Categories(models.Model):
     name = models.TextField(
@@ -110,7 +126,7 @@ class Review(models.Model):
         User, on_delete=models.CASCADE,
         related_name='reviews',
     )
-    score = models.IntegerField(
+    score = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],
         verbose_name='Оценка')
     pub_date = models.DateTimeField(
