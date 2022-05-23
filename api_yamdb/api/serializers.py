@@ -4,6 +4,7 @@ from rest_framework.validators import UniqueValidator
 
 
 class UserSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = User
         fields = (
@@ -14,102 +15,64 @@ class UserSerializer(serializers.ModelSerializer):
             'bio',
             'role'
         )
+        lookup_field = 'username'
 
-    def validate(self, data):
-        if data['username'] == 'me':
+# оставил валидацию, чтобы admin не создал пользователя с именем me
+# или пользователь не поменял свой username на me
+    def validate_username(self, value):
+        if value == 'me':
             raise serializers.ValidationError(
                 {
                     'username':
                     'Нельзя использовать имя me в качестве имени пользователя.'
                 }
             )
-        return data
+        return value
 
 
-class OneUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = (
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'bio',
-            'role'
-        )
-
-
-class SignupSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(allow_blank=False)
-    username = serializers.CharField(allow_blank=False)
+class SignupSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    username = serializers.CharField(required=True)
 
     class Meta:
         model = User
         fields = ('username', 'email')
 
-    def validate(self, data):
-        if data['username'] == 'me':
+    def validate_username(self, value):
+        if value == 'me' or '':
             raise serializers.ValidationError(
                 {
                     'username':
                     'Нельзя использовать имя me в качестве имени пользователя.'
                 },
             )
-        if User.objects.filter(username=data['username']).exists():
+        if User.objects.filter(username=value).exists():
             raise serializers.ValidationError(
                 {
                     'username':
-                        'Пользователь с данным username уже зарегистрирован.'
+                    'Пользователь с данным username уже зарегистрирован.'
                 },
             )
-        if User.objects.filter(email=data['email']).exists():
+        return value
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
             raise serializers.ValidationError(
                 {
                     'email':
-                        'Пользователь с данным email уже зарегистрирвоан.'
+                    'Пользователь с данным email уже зарегистрирован.'
                 },
             )
-        return data
+        return value
 
 
-class TokenSerializer(serializers.ModelSerializer):
+class TokenSerializer(serializers.Serializer):
     confirmation_code = serializers.CharField(source='code')
     username = serializers.CharField()
 
     class Meta:
         model = User
         fields = ('username', 'confirmation_code')
-
-
-class MeSerializer(serializers.ModelSerializer):
-    username = serializers.CharField()
-    role = serializers.CharField(read_only=True)
-
-    class Meta:
-        model = User
-        fields = (
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'bio',
-            'role'
-        )
-
-
-class MeAdminSerializer(serializers.ModelSerializer):
-    username = serializers.CharField()
-
-    class Meta:
-        model = User
-        fields = (
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'bio',
-            'role'
-        )
 
 
 class CategoriesSerializer(serializers.ModelSerializer):

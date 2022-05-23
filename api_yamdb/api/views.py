@@ -1,66 +1,48 @@
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, permissions, status, viewsets
-from rest_framework.pagination import (LimitOffsetPagination,
-                                       PageNumberPagination)
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, SAFE_METHODS
+from rest_framework import filters, mixins, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import (IsAuthenticatedOrReadOnly,
+                                        SAFE_METHODS, IsAuthenticated)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from reviews.models import User, Categories, Genre, Title
-from .permissions import (IsAdministrator, IsModerator, IsSuperuser, IsUser,
-                          CommentRewiewPermission)
-from .serializers import (SignupSerializer,
-                          TokenSerializer, MeSerializer, OneUserSerializer,
-                          MeAdminSerializer, UserSerializer,
+from .filters import TitleFilter
+from .permissions import (IsAdministrator, CommentRewiewPermission,
+                          GenresTitlesPermission)
+from .serializers import (SignupSerializer, TokenSerializer, UserSerializer,
                           CategoriesSerializer, GenreSerializer,
-                          TitlesSerializer, ReviewSerializer, CommentSerializer
-                          )
+                          TitlesSerializer, ReviewSerializer,
+                          CommentSerializer)
 from .token import default_token_generator, get_tokens_for_user
 from .mailing import send_email
 from django.db.models import Avg
 
 
-class APIUser(APIView, LimitOffsetPagination):
-    permission_classes = [IsAdministrator | IsSuperuser]
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAdministrator]
+    lookup_field = 'username'
 
-    def get(self, request):
-        user = User.objects.all()
-        results = self.paginate_queryset(user, request, view=self)
-        serializer = UserSerializer(results, many=True)
-        return self.get_paginated_response(serializer.data)
-
-    def post(self, request):
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class APIOneUser(APIView):
-    permission_classes = [IsAdministrator | IsSuperuser]
-
-    def get_object(self, username):
-        return get_object_or_404(User, username=username)
-
-    def get(self, request, username):
-        user = self.get_object(username)
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
-
-    def patch(self, request, username):
-        user = self.get_object(username)
-        serializer = OneUserSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
+    @action(
+        detail=False,
+        methods=['GET', 'PATCH'],
+        permission_classes=[IsAuthenticated]
+    )
+    def me(self, request):
+        user = request.user
+        if request.method == 'GET':
+            serializer = self.get_serializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, username):
-        user = self.get_object(username)
-        user.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        serializer.save(role=user.role, partial=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class APISignup(APIView):
@@ -114,41 +96,14 @@ class APIToken(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class APIMe(APIView):
-    permission_classes = [IsUser | IsAdministrator | IsModerator]
-
-    def get(self, request):
-        username = request.user.username
-        user = get_object_or_404(User, username=username)
-        serializer = MeAdminSerializer(user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def patch(self, request):
-        username = request.user.get_username()
-        user = get_object_or_404(User, username=username)
-        if user.role == 'user':
-            serializer = MeSerializer(user, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(
-                serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
-        else:
-            serializer = MeAdminSerializer(
-                user, data=request.data, partial=True
-            )
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
-
-
-class CategoriesViewSet(
+class MyOwnViewSet(
     mixins.CreateModelMixin, mixins.DestroyModelMixin,
     mixins.ListModelMixin, viewsets.GenericViewSet
 ):
+    pass
+
+
+class CategoriesViewSet(MyOwnViewSet):
     queryset = Categories.objects.all()
     serializer_class = CategoriesSerializer
     lookup_field = 'slug'
@@ -162,49 +117,37 @@ class CategoriesViewSet(
         return (IsAdministrator(),)
 
 
-class GenresViewSet(
-    mixins.CreateModelMixin, mixins.DestroyModelMixin,
-    mixins.ListModelMixin, viewsets.GenericViewSet
-):
+class GenresViewSet(MyOwnViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     lookup_field = 'slug'
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = [GenresTitlesPermission]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
-
-    def get_permissions(self):
-        if self.request.method in SAFE_METHODS:
-            return super().get_permissions()
-        return (IsAdministrator(),)
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(
         rating=Avg('reviews__score')).order_by('id')
     serializer_class = TitlesSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = [GenresTitlesPermission]
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('year',)
-
-    def get_permissions(self):
-        if self.request.method in SAFE_METHODS:
-            return super().get_permissions()
-        return (IsAdministrator(),)
-
-    def get_queryset(self):
-        queryset = self.queryset
-        genre_slug = self.request.query_params.get('genre')
-        category_slug = self.request.query_params.get('category')
-        name = self.request.query_params.get('name')
-        if genre_slug:
-            queryset = queryset.filter(genre__slug=genre_slug)
-        if category_slug:
-            queryset = queryset.filter(category__slug=category_slug)
-        if name:
-            queryset = queryset.filter(name__icontains=name)
-        return queryset
+    filterset_class = TitleFilter
+    # filterset_fields = ('year',)
+    #
+    # def get_queryset(self):
+    #     queryset = self.queryset
+    #     genre_slug = self.request.query_params.get('genre')
+    #     category_slug = self.request.query_params.get('category')
+    #     name = self.request.query_params.get('name')
+    #     if genre_slug:
+    #         queryset = queryset.filter(genre__slug=genre_slug)
+    #     if category_slug:
+    #         queryset = queryset.filter(category__slug=category_slug)
+    #     if name:
+    #         queryset = queryset.filter(name__icontains=name)
+    #     return queryset
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
